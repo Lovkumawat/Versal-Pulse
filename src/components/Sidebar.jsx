@@ -1,61 +1,108 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { switchRole } from '../redux/slices/roleSlice';
+import { switchToTeamLead, setSelectedMember } from '../redux/slices/roleSlice';
 
 const Sidebar = ({ currentView, onNavigate }) => {
-  const { currentRole, currentUser } = useSelector(state => state.role);
+  const { currentRole, currentUser, selectedMember } = useSelector(state => state.role);
   const { teamMembers } = useSelector(state => state.members);
   const dispatch = useDispatch();
 
-  const handleRoleSwitch = () => {
-    const newRole = currentRole === 'lead' ? 'member' : 'lead';
-    dispatch(switchRole(newRole));
+  // Get team members for sidebar based on role
+  const getSidebarMembers = () => {
+    if (currentRole === 'lead') {
+      // Team Lead mode: only show Priya Sharma
+      return teamMembers.filter(member => member.name === 'Priya Sharma');
+    } else {
+      // Team Member mode: show all members except Priya Sharma
+      return teamMembers.filter(member => member.name !== 'Priya Sharma');
+    }
   };
 
-  const menuItems = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: '📊',
-      active: currentView === 'dashboard'
-    },
-    {
-      id: 'team',
-      label: 'Team Members',
-      icon: '👥',
-      active: currentView === 'team-members' || currentView === 'member-detail'
-    },
-    {
-      id: 'analytics',
-      label: 'Analytics',
-      icon: '📈',
-      active: currentView === 'analytics'
-    },
-    {
-      id: 'calendar',
-      label: 'Calendar',
-      icon: '📅',
-      active: currentView === 'calendar'
-    },
-    {
-      id: 'tasks',
-      label: 'Tasks',
-      icon: '📋',
-      active: false
-    },
-    {
-      id: 'reports',
-      label: 'Reports',
-      icon: '📋',
-      active: false
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: '⚙️',
-      active: false
+  // Role-based menu items
+  const getMenuItems = () => {
+    if (currentRole === 'lead') {
+      // Team Lead menu - full access
+      return [
+        {
+          id: 'dashboard',
+          label: 'Team Dashboard',
+          icon: '📊',
+          active: currentView === 'dashboard'
+        },
+        {
+          id: 'team',
+          label: 'Team Members',
+          icon: '👥',
+          active: currentView === 'team-members' || currentView === 'member-detail'
+        },
+        {
+          id: 'analytics',
+          label: 'Analytics',
+          icon: '📈',
+          active: currentView === 'analytics'
+        },
+        {
+          id: 'calendar',
+          label: 'Calendar',
+          icon: '📅',
+          active: currentView === 'calendar'
+        },
+        {
+          id: 'tasks',
+          label: 'Task Management',
+          icon: '📋',
+          active: false
+        },
+        {
+          id: 'reports',
+          label: 'Reports',
+          icon: '📊',
+          active: false
+        },
+        {
+          id: 'settings',
+          label: 'Settings',
+          icon: '⚙️',
+          active: false
+        }
+      ];
+    } else {
+      // Team Member menu - limited access (no analytics, no calendar)
+      return [
+        {
+          id: 'dashboard',
+          label: 'My Dashboard',
+          icon: '📊',
+          active: currentView === 'dashboard'
+        },
+        {
+          id: 'tasks',
+          label: 'My Tasks',
+          icon: '📋',
+          active: false
+        },
+        {
+          id: 'settings',
+          label: 'Settings',
+          icon: '⚙️',
+          active: false
+        }
+      ];
     }
-  ];
+  };
+
+  const handleMemberClick = (member) => {
+    if (currentRole === 'lead') {
+      // Team Lead can view member details but not edit
+      onNavigate && onNavigate('member-detail', member.id);
+    } else {
+      // Team Member can switch to that member's view
+      dispatch(setSelectedMember(member));
+    }
+  };
+
+  const menuItems = getMenuItems();
+  const sidebarMembers = getSidebarMembers();
 
   const handleMenuClick = (itemId) => {
     if (onNavigate) {
@@ -116,48 +163,68 @@ const Sidebar = ({ currentView, onNavigate }) => {
           ))}
         </div>
 
-        {/* Quick Team Access - Only for Team Leads */}
-        {currentRole === 'lead' && teamMembers.length > 0 && (
+        {/* Team Members Section */}
+        {sidebarMembers.length > 0 && (
           <div className="mt-8">
-            <h3 className="text-sm font-medium text-indigo-300 mb-3 px-4">Quick Access</h3>
-            <div className="space-y-1">
-              {teamMembers.slice(0, 4).map((member) => (
+            <h3 className="text-sm font-medium text-indigo-300 mb-3 px-4">
+              {currentRole === 'lead' ? 'Team Lead' : 'Team Members'}
+            </h3>
+            <div className="space-y-2">
+              {sidebarMembers.map((member) => (
                 <button
                   key={member.id}
-                  onClick={() => onNavigate && onNavigate('member-detail', member.id)}
-                  className="w-full flex items-center px-4 py-2 text-indigo-300 hover:bg-indigo-800 hover:text-white rounded-lg transition-colors text-sm"
+                  onClick={() => handleMemberClick(member)}
+                  className="w-full hover:bg-indigo-800 hover:text-white rounded-lg transition-colors p-3"
                 >
-                  <img
-                    src={member.avatar}
-                    alt={member.name}
-                    className="w-5 h-5 rounded-full mr-3 object-cover max-w-full max-h-full"
-                  />
-                  <span className="truncate flex-1">{member.name}</span>
-                  <span className="text-xs">
-                    {member.status === 'Working' && '💻'}
-                    {member.status === 'Break' && '☕'}
-                    {member.status === 'Meeting' && '🎯'}
-                    {member.status === 'Offline' && '😴'}
-                  </span>
+                  <div className="flex items-center space-x-3">
+                    <img
+                      src={member.avatar}
+                      alt={member.name}
+                      className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{member.name}</p>
+                      <p className="text-indigo-300 text-xs">
+                        {member.status === 'Working' && 'Working'}
+                        {member.status === 'Break' && 'On Break'}
+                        {member.status === 'Meeting' && 'In Meeting'}
+                        {member.status === 'Offline' && 'Offline'}
+                      </p>
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Role Switch Section */}
+        {/* Current User Info */}
         <div className="mt-8 p-4 bg-indigo-800 rounded-lg">
-          <h3 className="text-sm font-medium text-indigo-300 mb-3">Current Role</h3>
+          <h3 className="text-sm font-medium text-indigo-300 mb-3">Current User</h3>
           <div className="flex items-center justify-between">
             <span className="text-white font-medium">
               {currentRole === 'lead' ? '👨‍💼 Team Lead' : '👤 Team Member'}
             </span>
           </div>
+          <div className="text-indigo-300 text-sm mt-2">
+            {currentUser}
+          </div>
           <button
-            onClick={handleRoleSwitch}
+            onClick={() => {
+              if (currentRole === 'lead') {
+                // Switch to first available team member
+                const availableMembers = teamMembers.filter(member => member.name !== 'Priya Sharma');
+                if (availableMembers.length > 0) {
+                  dispatch(setSelectedMember(availableMembers[0]));
+                }
+              } else {
+                // Switch back to Team Lead
+                dispatch(switchToTeamLead());
+              }
+            }}
             className="w-full mt-3 bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-md transition-colors text-sm font-medium"
           >
-            Switch to {currentRole === 'lead' ? 'Member' : 'Lead'}
+            Switch to {currentRole === 'lead' ? 'Team Member' : 'Team Lead'}
           </button>
         </div>
       </nav>

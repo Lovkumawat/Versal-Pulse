@@ -59,10 +59,10 @@ const TeamMembersView = ({ onViewMemberDetails, onBack }) => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'Working': return '💻';
+      case 'Working': return '🖥️';
       case 'Break': return '☕';
       case 'Meeting': return '🎯';
-      case 'Offline': return '😴';
+      case 'Offline': return '⏸️';
       default: return '❓';
     }
   };
@@ -112,7 +112,9 @@ const TeamMembersView = ({ onViewMemberDetails, onBack }) => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
-              <span className="text-green-600 text-lg">💻</span>
+              <div className="w-6 h-6 rounded-full bg-green-200 flex items-center justify-center">
+                <span className="text-xs font-medium text-green-600">W</span>
+              </div>
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-600">Working</p>
@@ -124,7 +126,9 @@ const TeamMembersView = ({ onViewMemberDetails, onBack }) => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg">
-              <span className="text-yellow-600 text-lg">☕</span>
+              <div className="w-6 h-6 rounded-full bg-yellow-200 flex items-center justify-center">
+                <span className="text-xs font-medium text-yellow-600">B</span>
+              </div>
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-600">On Break</p>
@@ -136,7 +140,9 @@ const TeamMembersView = ({ onViewMemberDetails, onBack }) => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <span className="text-blue-600 text-lg">🎯</span>
+              <div className="w-6 h-6 rounded-full bg-blue-200 flex items-center justify-center">
+                <span className="text-xs font-medium text-blue-600">M</span>
+              </div>
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-600">In Meeting</p>
@@ -173,10 +179,10 @@ const TeamMembersView = ({ onViewMemberDetails, onBack }) => {
                 className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="All">All Status</option>
-                <option value="Working">💻 Working</option>
-                <option value="Meeting">🎯 Meeting</option>
-                <option value="Break">☕ Break</option>
-                <option value="Offline">😴 Offline</option>
+                <option value="Working">Working</option>
+                <option value="Meeting">Meeting</option>
+                <option value="Break">Break</option>
+                <option value="Offline">Offline</option>
               </select>
 
               {/* Sort Options */}
@@ -235,7 +241,10 @@ const TeamMembersView = ({ onViewMemberDetails, onBack }) => {
                           <p className="text-sm text-gray-500">{member.role || 'Team Member'}</p>
                           <div className="flex items-center mt-2">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(member.status)}`}>
-                              {getStatusIcon(member.status)} {member.status}
+                              <div className="w-3 h-3 rounded-full bg-gray-300 flex items-center justify-center mr-1">
+                                <span className="text-xs font-medium text-gray-600">{member.status.charAt(0)}</span>
+                              </div>
+                              {member.status}
                             </span>
                           </div>
                         </div>

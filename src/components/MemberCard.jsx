@@ -15,16 +15,6 @@ const MemberCard = ({ member }) => {
     return member.tasks.filter(task => task.progress < 100).length;
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Working': return '💻';
-      case 'Break': return '☕';
-      case 'Meeting': return '🎯';
-      case 'Offline': return '😴';
-      default: return '❓';
-    }
-  };
-
   const getProgressStats = () => {
     const totalTasks = member.tasks.length;
     const completedTasks = member.tasks.filter(task => task.progress === 100).length;
@@ -52,7 +42,9 @@ const MemberCard = ({ member }) => {
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(member.status)}`}
               >
-                <span className="mr-1.5">{getStatusIcon(member.status)}</span>
+                <div className="w-4 h-4 rounded-full bg-gray-300 flex items-center justify-center mr-1.5">
+                  <span className="text-xs font-medium text-gray-600">{member.status.charAt(0)}</span>
+                </div>
                 {member.status}
               </span>
             </div>

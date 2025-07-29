@@ -14,7 +14,6 @@ const TaskForm = () => {
     dueDate: '',
     priority: 'medium',
     category: 'development',
-    estimatedHours: 1,
     tags: ''
   });
 
@@ -74,11 +73,6 @@ const TaskForm = () => {
       errors.category = 'Please select a valid category';
     }
 
-    const estimatedHours = parseFloat(formData.estimatedHours);
-    if (isNaN(estimatedHours) || estimatedHours <= 0 || estimatedHours > 100) {
-      errors.estimatedHours = 'Estimated hours must be between 0.1 and 100';
-    }
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -101,7 +95,6 @@ const TaskForm = () => {
         dueDate: formData.dueDate,
         priority: formData.priority,
         category: formData.category,
-        estimatedHours: parseFloat(formData.estimatedHours),
         assignedBy: currentUser
       };
 
@@ -162,15 +155,15 @@ const TaskForm = () => {
 
   const getCategoryIcon = (category) => {
     const icons = {
-      development: '💻',
-      design: '🎨',
-      testing: '🧪',
-      presentation: '📊',
-      research: '🔍',
-      documentation: '📚',
-      meeting: '👥'
+      development: '',
+      design: '',
+      testing: '',
+      presentation: '',
+      research: '',
+      documentation: '',
+      meeting: ''
     };
-    return icons[category] || '📋';
+    return icons[category] || '';
   };
 
   const selectedMember = teamMembers.find(m => m.id === parseInt(formData.memberId));
@@ -231,12 +224,10 @@ const TaskForm = () => {
               required
             >
               <option value="">Choose a team member...</option>
-              {teamMembers.map((member) => (
+              {teamMembers
+                .filter(member => member.name !== currentUser) // Filter out current user (team lead)
+                .map((member) => (
                 <option key={member.id} value={member.id}>
-                  {member.status === 'Working' && '💻'} 
-                  {member.status === 'Meeting' && '🎯'} 
-                  {member.status === 'Break' && '☕'} 
-                  {member.status === 'Offline' && '😴'} 
                   {member.name} ({member.status})
                 </option>
               ))}
@@ -249,9 +240,12 @@ const TaskForm = () => {
                 <img 
                   src={selectedMember.avatar} 
                   alt={selectedMember.name}
-                  className="w-6 h-6 rounded-full mr-2"
+                  className="w-8 h-8 rounded-full mr-3 object-cover ring-2 ring-gray-200"
                 />
-                <span>{selectedMember.tasks.length} active tasks</span>
+                <div>
+                  <div className="font-medium text-gray-900">{selectedMember.name}</div>
+                  <div className="text-xs text-gray-500">{selectedMember.tasks.length} active tasks</div>
+                </div>
               </div>
             )}
           </div>
@@ -365,7 +359,7 @@ const TaskForm = () => {
           </div>
         </div>
 
-        {/* Due Date & Estimated Hours */}
+        {/* Due Date */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-2">
@@ -385,32 +379,6 @@ const TaskForm = () => {
             />
             {formErrors.dueDate && (
               <p className="mt-1 text-sm text-red-600">{formErrors.dueDate}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="estimatedHours" className="block text-sm font-medium text-gray-700 mb-2">
-              Estimated Hours <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              id="estimatedHours"
-              name="estimatedHours"
-              value={formData.estimatedHours}
-              onChange={handleChange}
-              min="0.1"
-              max="100"
-              step="0.5"
-              placeholder="e.g., 2.5"
-              className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
-                formErrors.estimatedHours ? 'border-red-300 bg-red-50' : 'border-gray-300'
-              }`}
-              required
-            />
-            {formErrors.estimatedHours ? (
-              <p className="mt-1 text-sm text-red-600">{formErrors.estimatedHours}</p>
-            ) : (
-              <p className="mt-1 text-sm text-gray-500">Helps with workload planning and time tracking</p>
             )}
           </div>
         </div>
@@ -443,7 +411,7 @@ const TaskForm = () => {
         <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
           📊 Team Overview
         </h4>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-indigo-600">{teamMembers.length}</div>
             <div className="text-xs text-gray-600">Members</div>
@@ -459,12 +427,6 @@ const TaskForm = () => {
               {teamMembers.reduce((sum, m) => sum + m.tasks.filter(t => t.progress < 100).length, 0)}
             </div>
             <div className="text-xs text-gray-600">Active Tasks</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {Math.round(teamMembers.reduce((sum, m) => sum + m.tasks.reduce((taskSum, t) => taskSum + (t.estimatedHours || 0), 0), 0))}h
-            </div>
-            <div className="text-xs text-gray-600">Est. Hours</div>
           </div>
         </div>
       </div>

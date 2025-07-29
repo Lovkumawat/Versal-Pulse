@@ -4,6 +4,7 @@ import {
   toggleNotificationCenter
 } from '../redux/slices/notificationsSlice';
 import NotificationCenter from './NotificationCenter';
+import RoleSwitcher from './RoleSwitcher';
 
 const Header = ({ currentView, selectedMemberId }) => {
   const { currentRole, currentUser } = useSelector(state => state.role);
@@ -76,7 +77,7 @@ const Header = ({ currentView, selectedMemberId }) => {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <span className="text-gray-400">🔍</span>
+                  <span className="text-gray-400"></span>
                 </div>
               </div>
             </div>
@@ -84,6 +85,9 @@ const Header = ({ currentView, selectedMemberId }) => {
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
+            {/* Role Switcher */}
+            <RoleSwitcher />
+
             {/* Notifications */}
             <div className="relative">
               <button 

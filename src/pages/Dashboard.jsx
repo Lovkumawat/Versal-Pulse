@@ -38,24 +38,41 @@ const Dashboard = () => {
     if (view === 'dashboard') {
       handleBackToDashboard();
     } else if (view === 'team-members') {
-      setCurrentView('team-members');
-      setSelectedMemberId(null);
+      // Only Team Lead can access team members view
+      if (currentRole === 'lead') {
+        setCurrentView('team-members');
+        setSelectedMemberId(null);
+      }
     } else if (view === 'member-detail' && memberId) {
-      handleViewMemberDetails(memberId);
+      // Only Team Lead can view member details
+      if (currentRole === 'lead') {
+        handleViewMemberDetails(memberId);
+      }
     } else if (view === 'analytics') {
-      setCurrentView('analytics');
-      setSelectedMemberId(null);
-      // Invalidate analytics cache to ensure fresh data
-      dispatch(invalidateCache());
+      // Only Team Lead can access analytics
+      if (currentRole === 'lead') {
+        setCurrentView('analytics');
+        setSelectedMemberId(null);
+        // Invalidate analytics cache to ensure fresh data
+        dispatch(invalidateCache());
+      }
     } else if (view === 'calendar') {
-      setCurrentView('calendar');
-      setSelectedMemberId(null);
+      // Only Team Lead can access calendar
+      if (currentRole === 'lead') {
+        setCurrentView('calendar');
+        setSelectedMemberId(null);
+      }
     }
   };
 
   // Filter and sort team members
   const getFilteredAndSortedMembers = () => {
     let filtered = teamMembers;
+    
+    // Filter out Priya Sharma when in Team Lead mode (she's the lead, not a regular member)
+    if (currentRole === 'lead') {
+      filtered = filtered.filter(member => member.name !== 'Priya Sharma');
+    }
     
     // Apply status filter
     if (statusFilter !== 'All') {
@@ -78,7 +95,14 @@ const Dashboard = () => {
 
   // Get status summary for Team Lead view
   const getStatusSummary = () => {
-    const summary = teamMembers.reduce((acc, member) => {
+    let membersToCount = teamMembers;
+    
+    // Exclude Priya Sharma from team member counts when in Team Lead mode
+    if (currentRole === 'lead') {
+      membersToCount = teamMembers.filter(member => member.name !== 'Priya Sharma');
+    }
+    
+    const summary = membersToCount.reduce((acc, member) => {
       acc[member.status] = (acc[member.status] || 0) + 1;
       return acc;
     }, {});
@@ -94,18 +118,18 @@ const Dashboard = () => {
     <div className="space-y-8">
       {/* Top Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Team</p>
-              <p className="text-3xl font-bold text-gray-900">{teamMembers.length}</p>
-            </div>
-            <div className="p-3 bg-indigo-100 rounded-lg">
-              <span className="text-2xl">👥</span>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">Active members</p>
-        </div>
+                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+           <div className="flex items-center justify-between">
+             <div>
+               <p className="text-sm font-medium text-gray-600">Team Members</p>
+               <p className="text-3xl font-bold text-gray-900">{filteredMembers.length}</p>
+             </div>
+             <div className="p-3 bg-indigo-100 rounded-lg">
+               <span className="text-2xl">👥</span>
+             </div>
+           </div>
+           <p className="text-xs text-gray-500 mt-2">Under your management</p>
+         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between">
@@ -114,41 +138,41 @@ const Dashboard = () => {
               <p className="text-3xl font-bold text-green-600">{statusSummary.Working || 0}</p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
-              <span className="text-2xl">💻</span>
+              <span className="text-2xl">🖥️</span>
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-2">Currently active</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Tasks</p>
-              <p className="text-3xl font-bold text-blue-600">
-                {teamMembers.reduce((sum, member) => sum + member.tasks.length, 0)}
-              </p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <span className="text-2xl">📋</span>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">Assigned tasks</p>
-        </div>
+                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+           <div className="flex items-center justify-between">
+             <div>
+               <p className="text-sm font-medium text-gray-600">Total Tasks</p>
+               <p className="text-3xl font-bold text-blue-600">
+                 {filteredMembers.reduce((sum, member) => sum + member.tasks.length, 0)}
+               </p>
+             </div>
+             <div className="p-3 bg-blue-100 rounded-lg">
+               <span className="text-2xl">📋</span>
+             </div>
+           </div>
+           <p className="text-xs text-gray-500 mt-2">Assigned to team</p>
+         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Productivity</p>
-              <p className="text-3xl font-bold text-purple-600">
-                {teamMembers.length > 0 ? Math.round(((statusSummary.Working || 0) / teamMembers.length) * 100) : 0}%
-              </p>
-            </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <span className="text-2xl">📈</span>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">Team efficiency</p>
-        </div>
+                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+           <div className="flex items-center justify-between">
+             <div>
+               <p className="text-sm font-medium text-gray-600">Productivity</p>
+               <p className="text-3xl font-bold text-purple-600">
+                 {filteredMembers.length > 0 ? Math.round(((statusSummary.Working || 0) / filteredMembers.length) * 100) : 0}%
+               </p>
+             </div>
+             <div className="p-3 bg-purple-100 rounded-lg">
+               <span className="text-2xl">📈</span>
+             </div>
+           </div>
+           <p className="text-xs text-gray-500 mt-2">Team efficiency</p>
+         </div>
       </div>
 
       {/* Charts and Task Form Row */}
@@ -180,10 +204,10 @@ const Dashboard = () => {
                 className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="All">All Status</option>
-                <option value="Working">💻 Working</option>
-                <option value="Meeting">🎯 Meeting</option>
-                <option value="Break">☕ Break</option>
-                <option value="Offline">😴 Offline</option>
+                <option value="Working">Working</option>
+                <option value="Meeting">Meeting</option>
+                <option value="Break">Break</option>
+                <option value="Offline">Offline</option>
               </select>
 
               {/* Sort Options */}
@@ -224,31 +248,66 @@ const Dashboard = () => {
 
   // Team Member View
   const TeamMemberView = () => {
-    const { currentUser } = useSelector(state => state.role);
-    const currentMember = teamMembers.find(member => member.name === currentUser);
+    const { currentUser, selectedMember } = useSelector(state => state.role);
+    const { teamMembers } = useSelector(state => state.members);
+    
+    // Find the current member with explicit dependency on teamMembers
+    const currentMember = selectedMember || teamMembers.find(member => member.name === currentUser);
+    
+
+    
+    // Force re-render by using the status directly in the component
+    const currentStatus = currentMember?.status || 'Unknown';
+    
     const myActiveTasks = currentMember?.tasks.filter(task => task.progress < 100).length || 0;
     const myCompletedTasks = currentMember?.tasks.filter(task => task.progress === 100).length || 0;
+    const myTotalTasks = currentMember?.tasks.length || 0;
 
     return (
       <div className="space-y-8">
+        {/* Welcome Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white">
+          <div className="flex items-center space-x-4">
+                         <img
+               src={currentMember?.avatar || '/Images/PriyaSharm.jpeg'}
+               alt={currentMember?.name || 'Team Member'}
+               className="w-12 h-12 rounded-full object-cover ring-4 ring-white/20"
+             />
+            <div>
+              <h1 className="text-2xl font-bold">Welcome back, {currentMember?.name || 'Team Member'}!</h1>
+              <p className="text-blue-100">Here's your personal dashboard overview</p>
+            </div>
+          </div>
+        </div>
+
         {/* Personal Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">My Status</p>
-                <p className="text-2xl font-bold text-indigo-600">{currentMember?.status || 'Unknown'}</p>
+                <p className="text-2xl font-bold text-indigo-600">{currentStatus}</p>
               </div>
               <div className="p-3 bg-indigo-100 rounded-lg">
-                <span className="text-2xl">
-                  {currentMember?.status === 'Working' && '💻'}
-                  {currentMember?.status === 'Meeting' && '🎯'}
-                  {currentMember?.status === 'Break' && '☕'}
-                  {currentMember?.status === 'Offline' && '😴'}
-                </span>
+                <div className="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center">
+                  <span className="text-sm font-medium text-indigo-600">{currentStatus.charAt(0)}</span>
+                </div>
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-2">Current activity</p>
+          </div> */}
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Tasks</p>
+                <p className="text-2xl font-bold text-blue-600">{myTotalTasks}</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <span className="text-2xl">📋</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Assigned to me</p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -258,7 +317,7 @@ const Dashboard = () => {
                 <p className="text-2xl font-bold text-orange-600">{myActiveTasks}</p>
               </div>
               <div className="p-3 bg-orange-100 rounded-lg">
-                <span className="text-2xl">📋</span>
+                <span className="text-2xl">🔄</span>
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-2">In progress</p>
@@ -291,67 +350,43 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Team Overview and Chart */}
+        {/* Personal Progress */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Status Chart */}
           <div>
             <StatusChart />
           </div>
 
-          {/* Team Overview */}
+          {/* My Recent Activity */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Team Overview</h3>
-              <span className="text-sm text-gray-500">{teamMembers.length} members</span>
+              <h3 className="text-lg font-semibold text-gray-900">My Recent Activity</h3>
+              <span className="text-sm text-gray-500">This week</span>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{statusSummary.Working || 0}</div>
-                <div className="text-sm text-green-800">💻 Working</div>
-              </div>
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{statusSummary.Meeting || 0}</div>
-                <div className="text-sm text-blue-800">🎯 Meeting</div>
-              </div>
-              <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                <div className="text-2xl font-bold text-yellow-600">{statusSummary.Break || 0}</div>
-                <div className="text-sm text-yellow-800">☕ Break</div>
-              </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-600">{statusSummary.Offline || 0}</div>
-                <div className="text-sm text-gray-800">😴 Offline</div>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium text-gray-700">Team Members</h4>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {teamMembers.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={member.avatar}
-                        alt={member.name}
-                        className="w-6 h-6 rounded-full object-cover max-w-full max-h-full"
-                      />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                        <div className="text-xs text-gray-500">{member.tasks.length} tasks</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm">
-                        {member.status === 'Working' && '💻'}
-                        {member.status === 'Meeting' && '🎯'}
-                        {member.status === 'Break' && '☕'}
-                        {member.status === 'Offline' && '😴'}
-                      </span>
-                      <span className="text-xs text-gray-500">{member.status}</span>
-                    </div>
+            <div className="space-y-4">
+              {currentMember?.tasks.slice(0, 3).map((task, index) => (
+                <div key={task.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <div className={`w-3 h-3 rounded-full ${
+                    task.priority === 'urgent' ? 'bg-red-500' :
+                    task.priority === 'high' ? 'bg-orange-500' :
+                    task.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">{task.title}</p>
+                    <p className="text-xs text-gray-500">{task.category} • {task.progress}% complete</p>
                   </div>
-                ))}
-              </div>
+                  <div className="text-xs text-gray-500">
+                    {task.progress === 100 ? '✅' : '🔄'}
+                  </div>
+                </div>
+              ))}
+              {(!currentMember?.tasks || currentMember.tasks.length === 0) && (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No tasks assigned yet</p>
+                  <p className="text-sm">Tasks will appear here when assigned</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -360,17 +395,19 @@ const Dashboard = () => {
   };
 
     // Render based on current view
-  if (currentView === 'member-detail' && selectedMemberId) {
+  if (currentView === 'member-detail' && selectedMemberId && currentRole === 'lead') {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        {/* Sidebar */}
-        <Sidebar
-          currentView={currentView}
-          onNavigate={handleSidebarNavigate}
-        />
+        {/* Fixed Sidebar */}
+        <div className="fixed left-0 top-0 h-full z-10">
+          <Sidebar
+            currentView={currentView}
+            onNavigate={handleSidebarNavigate}
+          />
+        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Main Content - with left margin to account for fixed sidebar */}
+        <div className="flex-1 flex flex-col overflow-hidden ml-64">
           <Header
             currentView={currentView}
             selectedMemberId={selectedMemberId}
@@ -388,18 +425,20 @@ const Dashboard = () => {
     );
   }
 
-  // Team Members View
-  if (currentView === 'team-members') {
+  // Team Members View - Only for Team Lead
+  if (currentView === 'team-members' && currentRole === 'lead') {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        {/* Sidebar */}
-        <Sidebar
-          currentView={currentView}
-          onNavigate={handleSidebarNavigate}
-        />
+        {/* Fixed Sidebar */}
+        <div className="fixed left-0 top-0 h-full z-10">
+          <Sidebar
+            currentView={currentView}
+            onNavigate={handleSidebarNavigate}
+          />
+        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Main Content - with left margin to account for fixed sidebar */}
+        <div className="flex-1 flex flex-col overflow-hidden ml-64">
           <Header
             currentView={currentView}
             selectedMemberId={null}
@@ -417,18 +456,20 @@ const Dashboard = () => {
     );
   }
 
-  // Analytics View
-  if (currentView === 'analytics') {
+  // Analytics View - Only for Team Lead
+  if (currentView === 'analytics' && currentRole === 'lead') {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        {/* Sidebar */}
-        <Sidebar
-          currentView={currentView}
-          onNavigate={handleSidebarNavigate}
-        />
+        {/* Fixed Sidebar */}
+        <div className="fixed left-0 top-0 h-full z-10">
+          <Sidebar
+            currentView={currentView}
+            onNavigate={handleSidebarNavigate}
+          />
+        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Main Content - with left margin to account for fixed sidebar */}
+        <div className="flex-1 flex flex-col overflow-hidden ml-64">
           <Header
             currentView={currentView}
             selectedMemberId={null}
@@ -445,18 +486,20 @@ const Dashboard = () => {
     );
   }
 
-  // Calendar View
-  if (currentView === 'calendar') {
+  // Calendar View - Only for Team Lead
+  if (currentView === 'calendar' && currentRole === 'lead') {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        {/* Sidebar */}
-        <Sidebar
-          currentView={currentView}
-          onNavigate={handleSidebarNavigate}
-        />
+        {/* Fixed Sidebar */}
+        <div className="fixed left-0 top-0 h-full z-10">
+          <Sidebar
+            currentView={currentView}
+            onNavigate={handleSidebarNavigate}
+          />
+        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Main Content - with left margin to account for fixed sidebar */}
+        <div className="flex-1 flex flex-col overflow-hidden ml-64">
           <Header
             currentView={currentView}
             selectedMemberId={null}
@@ -475,14 +518,16 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <Sidebar 
-        currentView={currentView}
-        onNavigate={handleSidebarNavigate}
-      />
+      {/* Fixed Sidebar */}
+      <div className="fixed left-0 top-0 h-full z-10">
+        <Sidebar 
+          currentView={currentView}
+          onNavigate={handleSidebarNavigate}
+        />
+      </div>
       
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main Content - with left margin to account for fixed sidebar */}
+      <div className="flex-1 flex flex-col overflow-hidden ml-64">
         <Header 
           currentView={currentView}
           selectedMemberId={selectedMemberId}

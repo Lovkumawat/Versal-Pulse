@@ -38,18 +38,30 @@ const MemberDetailPage = ({ memberId, onBack }) => {
   }
 
   const handleStatusChange = (newStatus) => {
-    dispatch(updateMemberStatusWithNotification({ memberId: member.id, status: newStatus }));
+    // Only allow status changes in team member mode
+    if (currentRole === 'member') {
+      dispatch(updateMemberStatusWithNotification({ memberId: member.id, status: newStatus }));
+    } else {
+      // Show popup for Team Lead trying to change member status
+      alert('⚠️ Team Lead cannot update member status. Only team members can update their own status.');
+    }
   };
 
   const handleProgressChange = (taskId, change) => {
-    const task = member.tasks.find(t => t.id === taskId);
-    if (task) {
-      const newProgress = Math.max(0, Math.min(100, task.progress + change));
-      dispatch(updateTaskProgressWithNotification({
-        memberId: member.id,
-        taskId,
-        progress: newProgress
-      }));
+    // Only allow progress changes in team member mode
+    if (currentRole === 'member') {
+      const task = member.tasks.find(t => t.id === taskId);
+      if (task) {
+        const newProgress = Math.max(0, Math.min(100, task.progress + change));
+        dispatch(updateTaskProgressWithNotification({
+          memberId: member.id,
+          taskId,
+          progress: newProgress
+        }));
+      }
+    } else {
+      // Show popup for Team Lead trying to change task progress
+      alert('⚠️ Team Lead cannot update task progress. Only team members can update their own tasks.');
     }
   };
 
@@ -84,11 +96,17 @@ const MemberDetailPage = ({ memberId, onBack }) => {
   };
 
   const handlePriorityChange = (taskId, priority) => {
-    dispatch(updateTaskPriorityWithNotification({
-      memberId: member.id,
-      taskId,
-      priority
-    }));
+    // Only allow priority changes in team member mode
+    if (currentRole === 'member') {
+      dispatch(updateTaskPriorityWithNotification({
+        memberId: member.id,
+        taskId,
+        priority
+      }));
+    } else {
+      // Show popup for Team Lead trying to change task priority
+      alert('⚠️ Team Lead cannot update task priority. Only team members can update their own tasks.');
+    }
   };
 
   const handleCategoryChange = (taskId, category) => {
@@ -109,6 +127,9 @@ const MemberDetailPage = ({ memberId, onBack }) => {
   const getActiveTasks = () => member.tasks.filter(task => task.progress < 100);
   const getCompletedTasks = () => member.tasks.filter(task => task.progress === 100);
 
+  // Check if current user can edit this member's data
+  const canEdit = currentRole === 'member';
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Working': return 'bg-green-100 text-green-800 border-green-200';
@@ -121,11 +142,11 @@ const MemberDetailPage = ({ memberId, onBack }) => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'Working': return '💻';
-      case 'Break': return '☕';
-      case 'Meeting': return '🎯';
-      case 'Offline': return '😴';
-      default: return '❓';
+      case 'Working': return 'W';
+      case 'Break': return 'B';
+      case 'Meeting': return 'M';
+      case 'Offline': return 'O';
+      default: return '?';
     }
   };
 
@@ -205,15 +226,15 @@ const MemberDetailPage = ({ memberId, onBack }) => {
 
   const getCategoryIcon = (category) => {
     const icons = {
-      development: '💻',
-      design: '🎨',
-      testing: '🧪',
-      presentation: '📊',
-      research: '🔍',
-      documentation: '📚',
-      meeting: '👥'
+      development: '',
+      design: 'D',
+      testing: 'T',
+      presentation: 'P',
+      research: 'R',
+      documentation: 'D',
+      meeting: 'M'
     };
-    return icons[category] || '📋';
+    return icons[category] || 'T';
   };
 
   const getDueDateColor = (dueDate) => {
@@ -266,6 +287,11 @@ const MemberDetailPage = ({ memberId, onBack }) => {
                 </span>
                 {member.email && (
                   <span className="text-gray-600">{member.email}</span>
+                )}
+                {!canEdit && currentRole === 'lead' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                    👁️ View Only
+                  </span>
                 )}
               </div>
               {member.location && (
@@ -353,10 +379,11 @@ const MemberDetailPage = ({ memberId, onBack }) => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Status Management */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Management</h3>
+                 {/* Status Management */}
+         <div className="lg:col-span-1">
+           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+             <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Management</h3>
+             <p className="text-sm text-gray-600 mb-4">Only team members can update their own status</p>
             
             {currentRole === 'lead' ? (
               <div className="space-y-3">

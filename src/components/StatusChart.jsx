@@ -13,10 +13,10 @@ const StatusChart = () => {
   const total = teamMembers.length;
   
   const statusData = [
-    { status: 'Working', count: statusCounts.Working || 0, color: '#10b981', emoji: '💻' },
-    { status: 'Meeting', count: statusCounts.Meeting || 0, color: '#3b82f6', emoji: '🎯' },
-    { status: 'Break', count: statusCounts.Break || 0, color: '#f59e0b', emoji: '☕' },
-    { status: 'Offline', count: statusCounts.Offline || 0, color: '#6b7280', emoji: '😴' }
+    { status: 'Working', count: statusCounts.Working || 0, color: '#10b981' },
+    { status: 'Meeting', count: statusCounts.Meeting || 0, color: '#3b82f6' },
+    { status: 'Break', count: statusCounts.Break || 0, color: '#f59e0b' },
+    { status: 'Offline', count: statusCounts.Offline || 0, color: '#6b7280' }
   ];
 
   // Calculate percentages and create visual representation
@@ -113,7 +113,10 @@ const StatusChart = () => {
                   style={{ backgroundColor: item.color }}
                 ></div>
                 <span className="text-sm font-medium text-gray-700">
-                  {item.emoji} {item.status}
+                  <div className="w-4 h-4 rounded-full bg-gray-300 inline-flex items-center justify-center mr-2">
+                    <span className="text-xs font-medium text-gray-600">{item.status.charAt(0)}</span>
+                  </div>
+                  {item.status}
                 </span>
               </div>
               <div className="text-right">
