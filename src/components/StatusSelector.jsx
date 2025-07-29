@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateMemberStatus } from '../redux/slices/membersSlice';
+import { updateMemberStatusWithNotification } from '../redux/slices/membersSlice';
 
 const StatusSelector = () => {
   const { currentUser } = useSelector(state => state.role);
@@ -12,7 +12,7 @@ const StatusSelector = () => {
 
   const handleStatusChange = (status) => {
     if (currentMember) {
-      dispatch(updateMemberStatus({ memberId: currentMember.id, status }));
+      dispatch(updateMemberStatusWithNotification({ memberId: currentMember.id, status }));
     }
   };
 

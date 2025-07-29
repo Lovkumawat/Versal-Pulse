@@ -8,7 +8,11 @@ import TaskList from '../components/TaskList';
 import StatusSelector from '../components/StatusSelector';
 import StatusChart from '../components/StatusChart';
 import MemberDetailPage from '../components/MemberDetailPage';
+import TeamMembersView from '../components/TeamMembersView';
+import AnalyticsDashboard from '../components/AnalyticsDashboard';
+import CalendarView from '../components/CalendarView';
 import { setStatusFilter, setSortBy } from '../redux/slices/membersSlice';
+import { invalidateCache } from '../redux/slices/analyticsSlice';
 
 const Dashboard = () => {
   const { currentRole } = useSelector(state => state.role);
@@ -16,7 +20,7 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   
   // Navigation state
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' or 'member-detail'
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'team-members', 'member-detail', 'analytics', 'calendar'
   const [selectedMemberId, setSelectedMemberId] = useState(null);
 
   // Navigation handlers
@@ -33,8 +37,19 @@ const Dashboard = () => {
   const handleSidebarNavigate = (view, memberId = null) => {
     if (view === 'dashboard') {
       handleBackToDashboard();
+    } else if (view === 'team-members') {
+      setCurrentView('team-members');
+      setSelectedMemberId(null);
     } else if (view === 'member-detail' && memberId) {
       handleViewMemberDetails(memberId);
+    } else if (view === 'analytics') {
+      setCurrentView('analytics');
+      setSelectedMemberId(null);
+      // Invalidate analytics cache to ensure fresh data
+      dispatch(invalidateCache());
+    } else if (view === 'calendar') {
+      setCurrentView('calendar');
+      setSelectedMemberId(null);
     }
   };
 
@@ -318,7 +333,7 @@ const Dashboard = () => {
                       <img
                         src={member.avatar}
                         alt={member.name}
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="w-6 h-6 rounded-full object-cover max-w-full max-h-full"
                       />
                       <div>
                         <div className="text-sm font-medium text-gray-900">{member.name}</div>
@@ -344,26 +359,111 @@ const Dashboard = () => {
     );
   };
 
-  // Render based on current view
+    // Render based on current view
   if (currentView === 'member-detail' && selectedMemberId) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
         {/* Sidebar */}
-        <Sidebar 
+        <Sidebar
           currentView={currentView}
           onNavigate={handleSidebarNavigate}
         />
-        
+
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Header 
+          <Header
             currentView={currentView}
             selectedMemberId={selectedMemberId}
           />
           <main className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto px-6 py-8">
-              <MemberDetailPage 
-                memberId={selectedMemberId} 
+              <MemberDetailPage
+                memberId={selectedMemberId}
+                onBack={handleBackToDashboard}
+              />
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Team Members View
+  if (currentView === 'team-members') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        {/* Sidebar */}
+        <Sidebar
+          currentView={currentView}
+          onNavigate={handleSidebarNavigate}
+        />
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header
+            currentView={currentView}
+            selectedMemberId={null}
+          />
+          <main className="flex-1 overflow-y-auto">
+            <div className="max-w-7xl mx-auto px-6 py-8">
+              <TeamMembersView
+                onViewMemberDetails={handleViewMemberDetails}
+                onBack={handleBackToDashboard}
+              />
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Analytics View
+  if (currentView === 'analytics') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        {/* Sidebar */}
+        <Sidebar
+          currentView={currentView}
+          onNavigate={handleSidebarNavigate}
+        />
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header
+            currentView={currentView}
+            selectedMemberId={null}
+          />
+          <main className="flex-1 overflow-y-auto">
+            <div className="max-w-7xl mx-auto px-6 py-8">
+              <AnalyticsDashboard
+                onBack={handleBackToDashboard}
+              />
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Calendar View
+  if (currentView === 'calendar') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        {/* Sidebar */}
+        <Sidebar
+          currentView={currentView}
+          onNavigate={handleSidebarNavigate}
+        />
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header
+            currentView={currentView}
+            selectedMemberId={null}
+          />
+          <main className="flex-1 overflow-y-auto">
+            <div className="max-w-7xl mx-auto px-6 py-8">
+              <CalendarView
                 onBack={handleBackToDashboard}
               />
             </div>

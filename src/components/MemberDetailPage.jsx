@@ -1,11 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateMemberStatus, updateTaskProgress, assignTask } from '../redux/slices/membersSlice';
+import { 
+  updateMemberStatusWithNotification, 
+  updateTaskProgressWithNotification, 
+  assignTask,
+  startTimeTrackingWithNotification,
+  stopTimeTrackingWithNotification,
+  addTaskCommentWithNotification,
+  updateTaskPriorityWithNotification,
+  updateTaskCategory,
+  clearError
+} from '../redux/slices/membersSlice';
 
 const MemberDetailPage = ({ memberId, onBack }) => {
-  const { teamMembers } = useSelector(state => state.members);
-  const { currentRole } = useSelector(state => state.role);
+  const { teamMembers, taskCategories, taskPriorities, error } = useSelector(state => state.members);
+  const { currentRole, currentUser } = useSelector(state => state.role);
   const dispatch = useDispatch();
+
+  const [commentTexts, setCommentTexts] = useState({});
+  const [expandedTasks, setExpandedTasks] = useState({});
 
   const member = teamMembers.find(m => m.id === parseInt(memberId));
 
@@ -25,19 +38,72 @@ const MemberDetailPage = ({ memberId, onBack }) => {
   }
 
   const handleStatusChange = (newStatus) => {
-    dispatch(updateMemberStatus({ memberId: member.id, status: newStatus }));
+    dispatch(updateMemberStatusWithNotification({ memberId: member.id, status: newStatus }));
   };
 
   const handleProgressChange = (taskId, change) => {
     const task = member.tasks.find(t => t.id === taskId);
     if (task) {
       const newProgress = Math.max(0, Math.min(100, task.progress + change));
-      dispatch(updateTaskProgress({
+      dispatch(updateTaskProgressWithNotification({
         memberId: member.id,
         taskId,
         progress: newProgress
       }));
     }
+  };
+
+  const handleTimeTrackingToggle = (taskId) => {
+    const task = member.tasks.find(t => t.id === taskId);
+    if (task) {
+      if (task.timeTracking.isActive) {
+        dispatch(stopTimeTrackingWithNotification({
+          memberId: member.id,
+          taskId
+        }));
+      } else {
+        dispatch(startTimeTrackingWithNotification({
+          memberId: member.id,
+          taskId
+        }));
+      }
+    }
+  };
+
+  const handleAddComment = (taskId) => {
+    const commentText = commentTexts[taskId];
+    if (commentText && commentText.trim()) {
+      dispatch(addTaskCommentWithNotification({
+        memberId: member.id,
+        taskId,
+        text: commentText.trim(),
+        user: currentUser
+      }));
+      setCommentTexts(prev => ({ ...prev, [taskId]: '' }));
+    }
+  };
+
+  const handlePriorityChange = (taskId, priority) => {
+    dispatch(updateTaskPriorityWithNotification({
+      memberId: member.id,
+      taskId,
+      priority
+    }));
+  };
+
+  const handleCategoryChange = (taskId, category) => {
+    dispatch(updateTaskCategory({
+      memberId: member.id,
+      taskId,
+      category
+    }));
+  };
+
+  const toggleTaskExpansion = (taskId) => {
+    setExpandedTasks(prev => ({
+      ...prev,
+      [taskId]: !prev[taskId]
+    }));
   };
 
   const getActiveTasks = () => member.tasks.filter(task => task.progress < 100);
@@ -72,6 +138,16 @@ const MemberDetailPage = ({ memberId, onBack }) => {
     });
   };
 
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const getDaysUntilDue = (dueDate) => {
     const today = new Date();
     const due = new Date(dueDate);
@@ -80,8 +156,76 @@ const MemberDetailPage = ({ memberId, onBack }) => {
     return diffDays;
   };
 
+  const formatDuration = (milliseconds) => {
+    const hours = Math.floor(milliseconds / (1000 * 60 * 60));
+    const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
+  const getActiveTrackingTime = (task) => {
+    if (!task.timeTracking.isActive || !task.timeTracking.currentSessionStart) {
+      return 0;
+    }
+    const start = new Date(task.timeTracking.currentSessionStart);
+    const now = new Date();
+    return now - start;
+  };
+
+  const getTotalTime = (task) => {
+    let total = task.timeTracking.totalTime || 0;
+    if (task.timeTracking.isActive) {
+      total += getActiveTrackingTime(task);
+    }
+    return total;
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'urgent': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getPriorityIcon = (priority) => {
+    switch (priority) {
+      case 'low': return '🟢';
+      case 'medium': return '🟡';
+      case 'high': return '🟠';
+      case 'urgent': return '🔴';
+      default: return '⚪';
+    }
+  };
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      development: '💻',
+      design: '🎨',
+      testing: '🧪',
+      presentation: '📊',
+      research: '🔍',
+      documentation: '📚',
+      meeting: '👥'
+    };
+    return icons[category] || '📋';
+  };
+
+  const getDueDateColor = (dueDate) => {
+    const daysUntil = getDaysUntilDue(dueDate);
+    if (daysUntil < 0) return 'text-red-600 font-semibold';
+    if (daysUntil === 0) return 'text-orange-600 font-semibold';
+    if (daysUntil === 1) return 'text-yellow-600 font-medium';
+    return 'text-gray-600';
+  };
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 member-detail-container">
       {/* Breadcrumb Navigation */}
       <div className="flex items-center space-x-2 text-sm text-gray-500">
         <button 
@@ -97,17 +241,17 @@ const MemberDetailPage = ({ memberId, onBack }) => {
       </div>
 
       {/* Member Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-6">
-            <div className="relative">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-shrink-0 w-8 h-8">
               <img
                 src={member.avatar}
                 alt={member.name}
-                className="w-20 h-20 rounded-full object-cover ring-4 ring-gray-100"
+                className="w-8 h-8 rounded-full object-cover ring-4 ring-gray-100 max-w-full max-h-full"
               />
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-400 rounded-full border-4 border-white flex items-center justify-center">
-                <span className="text-lg">{getStatusIcon(member.status)}</span>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white flex items-center justify-center">
+                <span className="text-sm">{getStatusIcon(member.status)}</span>
               </div>
             </div>
             
@@ -191,6 +335,22 @@ const MemberDetailPage = ({ memberId, onBack }) => {
           </div>
         </div>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center">
+            <span className="text-red-600 mr-2">❌</span>
+            <span className="text-red-800 font-medium">{error}</span>
+            <button 
+              onClick={() => dispatch(clearError())}
+              className="ml-auto text-red-600 hover:text-red-800"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Status Management */}

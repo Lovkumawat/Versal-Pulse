@@ -1,6 +1,6 @@
 import React from 'react';
 
-const MemberCard = ({ member, onViewDetails }) => {
+const MemberCard = ({ member }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Working': return 'bg-green-100 text-green-800 border-green-200';
@@ -36,11 +36,11 @@ const MemberCard = ({ member, onViewDetails }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200">
       <div className="flex items-start space-x-4">
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <img
             src={member.avatar}
             alt={member.name}
-            className="w-14 h-14 rounded-full object-cover ring-2 ring-gray-100"
+            className="w-10 h-10 rounded-full object-cover ring-2 ring-gray-100 max-w-full max-h-full"
           />
           <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white"></div>
         </div>
@@ -103,18 +103,6 @@ const MemberCard = ({ member, onViewDetails }) => {
           </div>
         </div>
       )}
-
-      {/* View Details Button */}
-      <div className="mt-5 pt-4 border-t border-gray-100">
-        <button
-          onClick={() => onViewDetails && onViewDetails(member.id)}
-          className="w-full bg-indigo-50 text-indigo-700 py-2 px-4 rounded-lg hover:bg-indigo-100 transition-colors font-medium text-sm flex items-center justify-center space-x-2"
-        >
-          <span>👁️</span>
-          <span>View Member Details</span>
-          <span>→</span>
-        </button>
-      </div>
     </div>
   );
 };

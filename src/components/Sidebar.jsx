@@ -23,7 +23,19 @@ const Sidebar = ({ currentView, onNavigate }) => {
       id: 'team',
       label: 'Team Members',
       icon: '👥',
-      active: currentView === 'member-detail'
+      active: currentView === 'team-members' || currentView === 'member-detail'
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: '📈',
+      active: currentView === 'analytics'
+    },
+    {
+      id: 'calendar',
+      label: 'Calendar',
+      icon: '📅',
+      active: currentView === 'calendar'
     },
     {
       id: 'tasks',
@@ -32,18 +44,39 @@ const Sidebar = ({ currentView, onNavigate }) => {
       active: false
     },
     {
-      id: 'analytics',
-      label: 'Analytics',
-      icon: '📈',
+      id: 'reports',
+      label: 'Reports',
+      icon: '📋',
+      active: false
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: '⚙️',
       active: false
     }
   ];
 
   const handleMenuClick = (itemId) => {
-    if (itemId === 'dashboard' && onNavigate) {
-      onNavigate('dashboard');
+    if (onNavigate) {
+      switch (itemId) {
+        case 'dashboard':
+          onNavigate('dashboard');
+          break;
+        case 'team':
+          onNavigate('team-members');
+          break;
+        case 'analytics':
+          onNavigate('analytics');
+          break;
+        case 'calendar':
+          onNavigate('calendar');
+          break;
+        default:
+          // Handle other menu items or show coming soon
+          console.log(`${itemId} navigation coming soon...`);
+      }
     }
-    // Add more navigation handlers as needed
   };
 
   return (
@@ -97,7 +130,7 @@ const Sidebar = ({ currentView, onNavigate }) => {
                   <img
                     src={member.avatar}
                     alt={member.name}
-                    className="w-6 h-6 rounded-full mr-3 object-cover"
+                    className="w-5 h-5 rounded-full mr-3 object-cover max-w-full max-h-full"
                   />
                   <span className="truncate flex-1">{member.name}</span>
                   <span className="text-xs">
