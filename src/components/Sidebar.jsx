@@ -2,8 +2,9 @@ import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { switchRole } from '../redux/slices/roleSlice';
 
-const Sidebar = () => {
-  const { currentRole } = useSelector(state => state.role);
+const Sidebar = ({ currentView, onNavigate }) => {
+  const { currentRole, currentUser } = useSelector(state => state.role);
+  const { teamMembers } = useSelector(state => state.members);
   const dispatch = useDispatch();
 
   const handleRoleSwitch = () => {
@@ -16,13 +17,13 @@ const Sidebar = () => {
       id: 'dashboard',
       label: 'Dashboard',
       icon: '📊',
-      active: true
+      active: currentView === 'dashboard'
     },
     {
       id: 'team',
-      label: 'Team',
+      label: 'Team Members',
       icon: '👥',
-      active: false
+      active: currentView === 'member-detail'
     },
     {
       id: 'tasks',
@@ -31,12 +32,19 @@ const Sidebar = () => {
       active: false
     },
     {
-      id: 'reports',
-      label: 'Reports',
+      id: 'analytics',
+      label: 'Analytics',
       icon: '📈',
       active: false
     }
   ];
+
+  const handleMenuClick = (itemId) => {
+    if (itemId === 'dashboard' && onNavigate) {
+      onNavigate('dashboard');
+    }
+    // Add more navigation handlers as needed
+  };
 
   return (
     <div className="bg-indigo-900 text-white w-64 min-h-screen flex flex-col">
@@ -59,6 +67,7 @@ const Sidebar = () => {
           {menuItems.map((item) => (
             <button
               key={item.id}
+              onClick={() => handleMenuClick(item.id)}
               className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors ${
                 item.active
                   ? 'bg-indigo-700 text-white'
@@ -73,6 +82,35 @@ const Sidebar = () => {
             </button>
           ))}
         </div>
+
+        {/* Quick Team Access - Only for Team Leads */}
+        {currentRole === 'lead' && teamMembers.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-sm font-medium text-indigo-300 mb-3 px-4">Quick Access</h3>
+            <div className="space-y-1">
+              {teamMembers.slice(0, 4).map((member) => (
+                <button
+                  key={member.id}
+                  onClick={() => onNavigate && onNavigate('member-detail', member.id)}
+                  className="w-full flex items-center px-4 py-2 text-indigo-300 hover:bg-indigo-800 hover:text-white rounded-lg transition-colors text-sm"
+                >
+                  <img
+                    src={member.avatar}
+                    alt={member.name}
+                    className="w-6 h-6 rounded-full mr-3 object-cover"
+                  />
+                  <span className="truncate flex-1">{member.name}</span>
+                  <span className="text-xs">
+                    {member.status === 'Working' && '💻'}
+                    {member.status === 'Break' && '☕'}
+                    {member.status === 'Meeting' && '🎯'}
+                    {member.status === 'Offline' && '😴'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Role Switch Section */}
         <div className="mt-8 p-4 bg-indigo-800 rounded-lg">

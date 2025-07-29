@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
@@ -7,12 +7,36 @@ import TaskForm from '../components/TaskForm';
 import TaskList from '../components/TaskList';
 import StatusSelector from '../components/StatusSelector';
 import StatusChart from '../components/StatusChart';
+import MemberDetailPage from '../components/MemberDetailPage';
 import { setStatusFilter, setSortBy } from '../redux/slices/membersSlice';
 
 const Dashboard = () => {
   const { currentRole } = useSelector(state => state.role);
   const { teamMembers, statusFilter, sortBy } = useSelector(state => state.members);
   const dispatch = useDispatch();
+  
+  // Navigation state
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' or 'member-detail'
+  const [selectedMemberId, setSelectedMemberId] = useState(null);
+
+  // Navigation handlers
+  const handleViewMemberDetails = (memberId) => {
+    setSelectedMemberId(memberId);
+    setCurrentView('member-detail');
+  };
+
+  const handleBackToDashboard = () => {
+    setCurrentView('dashboard');
+    setSelectedMemberId(null);
+  };
+
+  const handleSidebarNavigate = (view, memberId = null) => {
+    if (view === 'dashboard') {
+      handleBackToDashboard();
+    } else if (view === 'member-detail' && memberId) {
+      handleViewMemberDetails(memberId);
+    }
+  };
 
   // Filter and sort team members
   const getFilteredAndSortedMembers = () => {
@@ -170,7 +194,11 @@ const Dashboard = () => {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {filteredMembers.map((member) => (
-                <MemberCard key={member.id} member={member} />
+                <MemberCard 
+                  key={member.id} 
+                  member={member} 
+                  onViewDetails={handleViewMemberDetails}
+                />
               ))}
             </div>
           )}
@@ -316,14 +344,49 @@ const Dashboard = () => {
     );
   };
 
+  // Render based on current view
+  if (currentView === 'member-detail' && selectedMemberId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        {/* Sidebar */}
+        <Sidebar 
+          currentView={currentView}
+          onNavigate={handleSidebarNavigate}
+        />
+        
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header 
+            currentView={currentView}
+            selectedMemberId={selectedMemberId}
+          />
+          <main className="flex-1 overflow-y-auto">
+            <div className="max-w-7xl mx-auto px-6 py-8">
+              <MemberDetailPage 
+                memberId={selectedMemberId} 
+                onBack={handleBackToDashboard}
+              />
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar 
+        currentView={currentView}
+        onNavigate={handleSidebarNavigate}
+      />
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
+        <Header 
+          currentView={currentView}
+          selectedMemberId={selectedMemberId}
+        />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-6 py-8">
             {currentRole === 'lead' ? <TeamLeadView /> : <TeamMemberView />}

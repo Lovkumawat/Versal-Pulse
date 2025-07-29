@@ -1,6 +1,6 @@
 import React from 'react';
 
-const MemberCard = ({ member }) => {
+const MemberCard = ({ member, onViewDetails }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Working': return 'bg-green-100 text-green-800 border-green-200';
@@ -103,6 +103,18 @@ const MemberCard = ({ member }) => {
           </div>
         </div>
       )}
+
+      {/* View Details Button */}
+      <div className="mt-5 pt-4 border-t border-gray-100">
+        <button
+          onClick={() => onViewDetails && onViewDetails(member.id)}
+          className="w-full bg-indigo-50 text-indigo-700 py-2 px-4 rounded-lg hover:bg-indigo-100 transition-colors font-medium text-sm flex items-center justify-center space-x-2"
+        >
+          <span>👁️</span>
+          <span>View Member Details</span>
+          <span>→</span>
+        </button>
+      </div>
     </div>
   );
 };
