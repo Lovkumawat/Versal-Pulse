@@ -6,6 +6,10 @@ A modern, real-time team productivity monitoring and management dashboard built 
 
 **[🚀 View Live Application](https://versal-pulse.vercel.app/)**
 
+## 📹 Video Walkthrough
+
+**[🎥 Watch Demo Video](https://drive.google.com/file/d/1Wo-VIPxeStKbItYOPworXESHxH1dM4ic/view)** - Get a comprehensive overview of all features and functionality
+
 ## 🚀 Key Features
 
 - **Real-time Team Monitoring**: Track team member status and productivity
